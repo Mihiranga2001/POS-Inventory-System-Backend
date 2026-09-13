@@ -409,6 +409,97 @@ export async function expireDueOrders() {
 	return expiredIds;
 }
 
+//GET /api/orders/report?range=today|week|month|all   (admin)
+//sales summary: order counts, revenue and the best selling products
+export async function getSalesReport(req, res) {
+	if (!isAdmin(req)) {
+		res.status(403).json({ message: "Only admins can view the sales report" });
+		return;
+	}
+
+	try {
+		//release stale reservations first so the status counts are accurate
+		await expireDueOrders();
+
+		const range = req.query.range || "today";
+		const now = new Date();
+		let startDate = null;
+
+		if (range == "today") {
+			startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+		} else if (range == "week") {
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+		} else if (range == "month") {
+			startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+		}
+
+		const query = {};
+		if (startDate != null) {
+			query.createdAt = { $gte: startDate };
+		}
+
+		const orders = await Order.find(query).sort({ createdAt: -1 });
+
+		//every status is counted, but only PAID orders earn revenue
+		const statusCounts = {};
+		let revenue = 0;
+		let itemsSold = 0;
+		let paidOrders = 0;
+
+		const productTotals = new Map();
+
+		orders.forEach((order) => {
+			statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
+
+			if (order.status != ORDER_STATUS.PAID) {
+				return;
+			}
+
+			paidOrders = paidOrders + 1;
+			revenue = revenue + order.totalAmount;
+
+			order.items.forEach((item) => {
+				itemsSold = itemsSold + item.quantity;
+
+				const existing = productTotals.get(item.productId);
+
+				if (existing == null) {
+					productTotals.set(item.productId, {
+						productId: item.productId,
+						name: item.name,
+						image: item.image,
+						quantitySold: item.quantity,
+						revenue: item.price * item.quantity,
+					});
+				} else {
+					existing.quantitySold = existing.quantitySold + item.quantity;
+					existing.revenue = existing.revenue + item.price * item.quantity;
+				}
+			});
+		});
+
+		const topSelling = Array.from(productTotals.values())
+			.sort((a, b) => b.quantitySold - a.quantitySold)
+			.slice(0, 10);
+
+		res.json({
+			range: range,
+			from: startDate,
+			generatedAt: now,
+			totalOrders: orders.length,
+			paidOrders: paidOrders,
+			revenue: revenue,
+			itemsSold: itemsSold,
+			averageOrderValue: paidOrders == 0 ? 0 : revenue / paidOrders,
+			statusCounts: statusCounts,
+			topSelling: topSelling,
+			recentOrders: orders.slice(0, 10),
+		});
+	} catch (error) {
+		sendError(res, error, "Failed to build the sales report");
+	}
+}
+
 //POST /api/orders/expire   (admin) -> manual trigger, handy for demos
 export async function expireOrdersNow(req, res) {
 	if (!isAdmin(req)) {
