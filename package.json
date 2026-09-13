@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
     "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
@@ -20,6 +21,7 @@
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.10.2",
+    "multer": "^2.3.0",
     "nodemailer": "^10.0.9"
   },
   "devDependencies": {

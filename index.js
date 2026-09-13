@@ -9,6 +9,7 @@ import productRouter from "./routes/productRouter.js";
 import cartRouter from "./routes/cartRouter.js";
 import orderRouter from "./routes/orderRouter.js";
 import paymentRouter from "./routes/paymentRouter.js";
+import uploadRouter from "./routes/uploadRouter.js";
 import { startReservationScheduler } from "./utils/reservationScheduler.js";
 
 dotenv.config();
@@ -56,7 +57,7 @@ app.use((req, res, next) => {
 
 app.get("/", (req, res) => {
 	res.json({
-		service: "Techloom POS Order & Inventory System - Task 01",
+		service: "POS Order & Inventory System - Task 01",
 		status: "running",
 		reservationWindowMinutes: Number(process.env.RESERVATION_TIMEOUT_MINUTES || 5),
 		endpoints: {
@@ -65,6 +66,7 @@ app.get("/", (req, res) => {
 			cart: "/api/cart",
 			orders: "/api/orders",
 			payments: "/api/payments",
+			upload: "/api/upload",
 		},
 	});
 });
@@ -82,6 +84,7 @@ app.use("/api/products", productRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/payments", paymentRouter);
+app.use("/api/upload", uploadRouter);
 
 app.use((req, res) => {
 	res.status(404).json({ message: "Route not found" });
