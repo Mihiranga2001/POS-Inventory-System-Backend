@@ -32,7 +32,10 @@ export async function uploadImage(req, res) {
 		});
 
 		if (error != null) {
-			throw createError(500, "Supabase upload failed: " + error.message);
+			//logged in full for the host logs, and surfaced as 502 so the message
+			//actually reaches the browser instead of being masked as a 500
+			console.error("Supabase upload error:", error);
+			throw createError(502, "Supabase upload failed: " + error.message);
 		}
 
 		const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
@@ -61,7 +64,8 @@ export async function deleteImage(req, res) {
 		const { error } = await supabase.storage.from(bucket).remove([req.params.fileName]);
 
 		if (error != null) {
-			throw createError(500, "Supabase delete failed: " + error.message);
+			console.error("Supabase delete error:", error);
+			throw createError(502, "Supabase delete failed: " + error.message);
 		}
 
 		res.json({

@@ -18,9 +18,10 @@ export function getSupabase() {
 	const key = process.env.SUPABASE_SERVICE_KEY;
 
 	if (url == null || key == null || url == "" || key == "") {
+		//503 not 500: sendError hides the message on 500, and this one is worth reading
 		throw createError(
-			500,
-			"Image uploads are not configured. Set SUPABASE_URL and SUPABASE_SERVICE_KEY."
+			503,
+			"Image uploads are not configured. Set SUPABASE_URL and SUPABASE_SERVICE_KEY on the server."
 		);
 	}
 
