@@ -9,7 +9,7 @@ import productRouter from "./routes/productRouter.js";
 import cartRouter from "./routes/cartRouter.js";
 import orderRouter from "./routes/orderRouter.js";
 import paymentRouter from "./routes/paymentRouter.js";
-import { startReservationScheduler } from "../utils/reservationScheduler.js";
+import { startReservationScheduler } from "./utils/reservationScheduler.js";
 
 dotenv.config();
 
